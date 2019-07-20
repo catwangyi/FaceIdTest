@@ -15,11 +15,11 @@
             android:layout_centerHorizontal="true"
             android:background="@color/colorPrimary"
             android:layout_height="wrap_content"/>-->
-                <com.baidu.mapapi.map.MapView
-                    android:id="@+id/bdmapView"
-                    android:layout_height="match_parent"
-                    android:layout_width="match_parent"
-                    android:clickable="true"
-                    />
+        <com.baidu.mapapi.map.MapView
+            android:id="@+id/bdmapView"
+            android:layout_height="match_parent"
+            android:layout_width="match_parent"
+            android:clickable="true"/>
+
 
 </LinearLayout>

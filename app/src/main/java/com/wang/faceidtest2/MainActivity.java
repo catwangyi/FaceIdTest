@@ -16,8 +16,8 @@ import android.util.Log;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.baidu.location.BDAbstractLocationListener;
 import com.baidu.location.BDLocation;
-import com.baidu.location.BDLocationListener;
 import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.mapapi.SDKInitializer;
@@ -55,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     public LocationClient mLocationClient;
     private MapView mMapView;
     private BaiduMap baiduMap;
-    private boolean isFirstLocate = true;
+    private boolean isFirstLocate = true;//用来显示是否是第一次定位
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -128,9 +128,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void requestLocation(){
         LocationClientOption option = new LocationClientOption();
-        option.setScanSpan(5000);
+        option.setScanSpan(1000);
+        option.setOpenGps(true); // 打开gps
+        option.setCoorType("bd09ll");//需要设置坐标偏移标准，否则定位不准确,后面是字母L
         mLocationClient.setLocOption(option);
-        mLocationClient.start();
+        mLocationClient.start();//打开地图定位图层
     }
 
     private void navigageTo(BDLocation location){
@@ -141,15 +143,18 @@ public class MainActivity extends AppCompatActivity {
                 Log.i(TAG, "纬度:"+location.getLongitude());
                 MapStatusUpdate update = MapStatusUpdateFactory.newLatLng(latLng);
                 baiduMap.animateMapStatus(update);
-                update = MapStatusUpdateFactory.zoomTo(16f);
-                baiduMap.animateMapStatus(update);
+                update = MapStatusUpdateFactory.zoomTo(18f);
+                baiduMap.animateMapStatus(update);//设置地图位置
                 isFirstLocate = false;
             }
-            MyLocationData.Builder locationBuilder = new MyLocationData.Builder();
-            locationBuilder.latitude(location.getLatitude());
-            locationBuilder.longitude(location.getLongitude());
-            MyLocationData locationData = locationBuilder.build();
-            baiduMap.setMyLocationData(locationData);
+            MyLocationData locData = new MyLocationData.Builder()
+                    .accuracy(location.getRadius())
+                    // 此处设置开发者获取到的方向信息，顺时针0-360
+                    .direction(location.getDirection())
+                    .latitude(location.getLatitude())//纬度
+                    .longitude(location.getLongitude())//经度
+                    .build();
+            baiduMap.setMyLocationData(locData);
         }else{
             Toast.makeText(getApplicationContext(), "没有获取到定位信息！", Toast.LENGTH_SHORT).show();
         }
@@ -269,27 +274,14 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-public class MyLocationListener implements BDLocationListener {
+public class MyLocationListener extends BDAbstractLocationListener {
 
     @Override
     public void onReceiveLocation(BDLocation bdLocation) {
         StringBuilder stringBuilder = new StringBuilder();
         if (bdLocation.getLocType()==BDLocation.TypeGpsLocation||bdLocation.getLocType()==BDLocation.TypeNetWorkLocation){
             navigageTo(bdLocation);
-            stringBuilder.append("经度：")
-                    .append(bdLocation.getLatitude())
-                    .append("\n")
-                    .append("纬度：")
-                    .append(bdLocation.getLongitude())
-                    .append("\n")
-                    .append("定位方式：");
-            if (bdLocation.getLocType()==BDLocation.TypeGpsLocation){
-                stringBuilder.append("GPS");
-            }else if(bdLocation.getLocType()==BDLocation.TypeNetWorkLocation){
-                stringBuilder.append("网络");
-            }
-            Toast.makeText(getApplicationContext(), stringBuilder.toString(),Toast.LENGTH_SHORT).show();
-            Log.i(TAG,"定位成功！" );
+
         }else {
             //locationMsg.setText("发生未知错误，定位失败！");
             Toast.makeText(getApplicationContext(), "发生未知错误，定位失败！", Toast.LENGTH_SHORT).show();
