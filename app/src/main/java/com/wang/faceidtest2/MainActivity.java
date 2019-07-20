@@ -5,27 +5,33 @@ import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
-import android.provider.MediaStore;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.FileProvider;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.wang.faceidtest2.Utils.LBSUtils;
+import com.baidu.location.BDLocation;
+import com.baidu.location.BDLocationListener;
+import com.baidu.location.LocationClient;
+import com.baidu.location.LocationClientOption;
+import com.baidu.mapapi.SDKInitializer;
+import com.baidu.mapapi.map.BaiduMap;
+import com.baidu.mapapi.map.MapStatusUpdate;
+import com.baidu.mapapi.map.MapStatusUpdateFactory;
+import com.baidu.mapapi.map.MapView;
+import com.baidu.mapapi.map.MyLocationData;
+import com.baidu.mapapi.model.LatLng;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -44,63 +50,52 @@ public class MainActivity extends AppCompatActivity {
     private TextView locationMsg;
     private Uri imageUri;
     private static final String ServerIP = "http://10.0.2.2:8888";
-    //private ImageView picture;
     private ProgressDialog mProgressDialog;
     private String imagePath_take;
+    public LocationClient mLocationClient;
+    private MapView mMapView;
+    private BaiduMap baiduMap;
+    private boolean isFirstLocate = true;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
         /*getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);//全屏显示（隐藏状态栏）*/
         mProgressDialog = new ProgressDialog(MainActivity.this);
         mProgressDialog.setMessage("正在识别，请稍后...");
         mProgressDialog.setCancelable(false);
-        Button button = findViewById(R.id.id_login);
-        locationMsg = findViewById(R.id.location);
-        //picture = findViewById(R.id.picture);
-        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
-        //权限检查代码
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
+        //Button button = findViewById(R.id.id_login);
+        //locationMsg = findViewById(R.id.location);
+
+
+        mLocationClient = new LocationClient(getApplicationContext());
+        mLocationClient.registerLocationListener(new MyLocationListener());
+        SDKInitializer.initialize(getApplicationContext());
+        setContentView(R.layout.activity_main);
+        mMapView= findViewById(R.id.bdmapView);
+        baiduMap = mMapView.getMap();
+        baiduMap.setMyLocationEnabled(true);
+
+        List<String> permissionList = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.ACCESS_FINE_LOCATION);
         }
-        locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER,//指定GPS定位的提供者
-                1000,//间隔时间
-                1,//位置间隔1米
-                new LocationListener() {//监听GPS定位信息是否改变
-                    @Override
-                    public void onLocationChanged(Location location) {//GPS信息改变时回调
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.READ_PHONE_STATE)!= PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.READ_PHONE_STATE);
+        }
+        if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.WRITE_EXTERNAL_STORAGE)!= PackageManager.PERMISSION_GRANTED){
+            permissionList.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
+        }
+        if (!permissionList.isEmpty()){
+          String[] permissions = permissionList.toArray(new String[permissionList.size()]);
+            ActivityCompat.requestPermissions(MainActivity.this,permissions ,1 );
+        }else{
+            requestLocation();
+        }
 
-                    }
 
-                    @Override
-                    public void onStatusChanged(String s, int i, Bundle bundle) {//GPS状态改变时回调
-
-                    }
-
-                    @Override
-                    public void onProviderEnabled(String s) {//定位提供者启动时回调
-
-                    }
-
-                    @Override
-                    public void onProviderDisabled(String s) {//定位提供者关闭时回调
-
-                    }
-                }
-        );
-        Location location = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER);//回去最新的定位信息
-        locationMsg.setText(LBSUtils.locationUpdates(location));
-
-        button.setOnClickListener(new View.OnClickListener() {
+        /*button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 String imagename="face.jpg";
@@ -128,7 +123,80 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("showActionIcons", false);
                 startActivityForResult(intent,TAKE_PHOTO);
             }
-        });
+        });*/
+    }
+
+    private void requestLocation(){
+        LocationClientOption option = new LocationClientOption();
+        option.setScanSpan(5000);
+        mLocationClient.setLocOption(option);
+        mLocationClient.start();
+    }
+
+    private void navigageTo(BDLocation location){
+        if(location!=null){
+            if (isFirstLocate){
+                LatLng latLng = new LatLng(location.getLatitude(),location.getLongitude() );
+                Log.i(TAG, "经度："+location.getLatitude());
+                Log.i(TAG, "纬度:"+location.getLongitude());
+                MapStatusUpdate update = MapStatusUpdateFactory.newLatLng(latLng);
+                baiduMap.animateMapStatus(update);
+                update = MapStatusUpdateFactory.zoomTo(16f);
+                baiduMap.animateMapStatus(update);
+                isFirstLocate = false;
+            }
+            MyLocationData.Builder locationBuilder = new MyLocationData.Builder();
+            locationBuilder.latitude(location.getLatitude());
+            locationBuilder.longitude(location.getLongitude());
+            MyLocationData locationData = locationBuilder.build();
+            baiduMap.setMyLocationData(locationData);
+        }else{
+            Toast.makeText(getApplicationContext(), "没有获取到定位信息！", Toast.LENGTH_SHORT).show();
+        }
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mLocationClient.stop();
+        mMapView.onDestroy();
+        baiduMap.setMyLocationEnabled(false);
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        mMapView.onResume();
+    }
+
+    @Override
+    public void onPause(){
+        super.onPause();
+        mMapView.onPause();
+    }
+
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        switch (requestCode){
+            case 1:
+                if (grantResults.length>0){
+                    for (int result:grantResults){
+                        if (result!=PackageManager.PERMISSION_GRANTED){
+                            Toast.makeText(MainActivity.this,"必须同意所有的权限才能使用本程序！" ,Toast.LENGTH_SHORT).show();
+                            finish();
+                            return;
+                        }
+                    }
+                    requestLocation();
+                }else{
+                    Toast.makeText(MainActivity.this,"未知错误！" ,Toast.LENGTH_SHORT).show();
+                    finish();
+                }
+                break;
+            default:
+        }
     }
 
     @Override
@@ -199,5 +267,35 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
+
+
+public class MyLocationListener implements BDLocationListener {
+
+    @Override
+    public void onReceiveLocation(BDLocation bdLocation) {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (bdLocation.getLocType()==BDLocation.TypeGpsLocation||bdLocation.getLocType()==BDLocation.TypeNetWorkLocation){
+            navigageTo(bdLocation);
+            stringBuilder.append("经度：")
+                    .append(bdLocation.getLatitude())
+                    .append("\n")
+                    .append("纬度：")
+                    .append(bdLocation.getLongitude())
+                    .append("\n")
+                    .append("定位方式：");
+            if (bdLocation.getLocType()==BDLocation.TypeGpsLocation){
+                stringBuilder.append("GPS");
+            }else if(bdLocation.getLocType()==BDLocation.TypeNetWorkLocation){
+                stringBuilder.append("网络");
+            }
+            Toast.makeText(getApplicationContext(), stringBuilder.toString(),Toast.LENGTH_SHORT).show();
+            Log.i(TAG,"定位成功！" );
+        }else {
+            //locationMsg.setText("发生未知错误，定位失败！");
+            Toast.makeText(getApplicationContext(), "发生未知错误，定位失败！", Toast.LENGTH_SHORT).show();
+            Log.i(TAG,"发生未知错误，定位失败！" );
+        }
+    }
+}
 
 }
