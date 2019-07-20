@@ -284,8 +284,10 @@ public class MyLocationListener extends BDAbstractLocationListener {
 
         }else {
             //locationMsg.setText("发生未知错误，定位失败！");
-            Toast.makeText(getApplicationContext(), "发生未知错误，定位失败！", Toast.LENGTH_SHORT).show();
-            Log.i(TAG,"发生未知错误，定位失败！" );
+            if (!isFirstLocate){
+                Toast.makeText(getApplicationContext(), "发生未知错误，定位失败！", Toast.LENGTH_SHORT).show();
+                Log.i(TAG,"发生未知错误，定位失败！" );
+            }
         }
     }
 }
