@@ -11,6 +11,7 @@ import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.NavigationView;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
@@ -83,11 +84,39 @@ public class MainActivity extends AppCompatActivity {
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);//禁止手动滑动弹出
         //mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);//打开手动滑动弹出
         ActionBar actionBar = getSupportActionBar();
+
+        final NavigationView navigationView = findViewById(R.id.nav_view);//NavigationView
+
         if (actionBar!=null){
             actionBar.setDisplayHomeAsUpEnabled(true);
-            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);
+            actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);//菜单按钮
         }
 
+
+
+        //navigationView.setCheckedItem(R.id.nav_log);//设置默认选项
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {//处理按钮事件；
+                switch (menuItem.getItemId()){
+                    case R.id.person_details:
+                        Toast.makeText(getApplicationContext(),"自认资料！" ,Toast.LENGTH_SHORT).show();
+                        break;
+                    case R.id.nav_log://最近记录
+                        Toast.makeText(getApplicationContext(),"最近记录！" ,Toast.LENGTH_SHORT).show();
+                        break;
+                    case R.id.logout://退出
+                        Intent intent = new Intent(getApplicationContext(),LoginActivity.class);
+                        startActivity(intent);
+                        Toast.makeText(getApplicationContext(),"退出！" ,Toast.LENGTH_SHORT ).show();
+                        finish();
+                        break;
+                }
+                //关闭滑动菜单
+                //mDrawerLayout.closeDrawers();
+                return true;
+            }
+        });
 
         mProgressDialog = new ProgressDialog(MainActivity.this);
         mProgressDialog.setCancelable(false);

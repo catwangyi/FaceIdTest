@@ -42,11 +42,13 @@
             </FrameLayout>
         </LinearLayout>
     </FrameLayout>
-        <TextView
-            android:layout_width="match_parent"
+        <android.support.design.widget.NavigationView
+            android:id="@+id/nav_view"
             android:layout_gravity="start"
-            android:textSize="30sp"
-            android:background="#FFF"
-            android:text="this is menu"
-            android:layout_height="match_parent"/>
+            android:layout_width="match_parent"
+            app:menu="@menu/nav_menu"
+            app:headerLayout="@layout/nav_header"
+            android:layout_height="match_parent">
+
+        </android.support.design.widget.NavigationView>
 </android.support.v4.widget.DrawerLayout>

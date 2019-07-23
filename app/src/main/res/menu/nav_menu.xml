@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+<group android:checkableBehavior="single">
+    <item
+        android:id="@+id/person_details"
+        android:icon="@drawable/details"
+        android:title="个人资料"
+          />
+    <item
+        android:id="@+id/nav_log"
+        android:icon="@drawable/login_log"
+        android:title="打卡记录"
+        />
+    <item
+        android:id="@+id/logout"
+        android:icon="@drawable/logout"
+        android:title="注销"
+        />
+</group>
+</menu>
