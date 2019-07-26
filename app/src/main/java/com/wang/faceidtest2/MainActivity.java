@@ -39,20 +39,13 @@ import com.baidu.mapapi.map.MapStatusUpdateFactory;
 import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
+import com.wang.faceidtest2.HttpUtils.HttpUtil;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.MediaType;
-import okhttp3.MultipartBody;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
 import top.zibin.luban.Luban;
 import top.zibin.luban.OnCompressListener;
 import top.zibin.luban.OnRenameListener;
@@ -63,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int LOGIN_ERROR = 3;
     private static final String TAG = "MainActivity";
     private Uri imageUri;
-    private static final String ServerAddr = "https://172.16.183.181:8888";
+    public static final String ServerAddr = "https://192.168.0.102:8888";
     private ProgressDialog mProgressDialog;
     private String imagePath_take;
     public LocationClient mLocationClient;
@@ -100,7 +93,7 @@ public class MainActivity extends AppCompatActivity {
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {//处理按钮事件；
                 switch (menuItem.getItemId()){
                     case R.id.person_details:
-                        Toast.makeText(getApplicationContext(),"自认资料！" ,Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getApplicationContext(),"个人资料！" ,Toast.LENGTH_SHORT).show();
                         break;
                     case R.id.nav_log://最近记录
                         Toast.makeText(getApplicationContext(),"最近记录！" ,Toast.LENGTH_SHORT).show();
@@ -293,7 +286,6 @@ public class MainActivity extends AppCompatActivity {
                         mProgressDialog.show();
                         File file = new File(imagePath_take);
                         resize(file);//压缩图片
-                        uploadImage(ServerAddr,file);
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -303,75 +295,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    private void askForResult(){
-                try{
-                    OkHttpClient client = new OkHttpClient();
-                    Request request = new Request.Builder()
-                            .url(ServerAddr)
-                            .build();
-                    Response response = client.newCall(request).execute();
-                    String responseData = response.body().string();
-                    Toast.makeText(getApplicationContext(),"识别结果是"+responseData ,Toast.LENGTH_SHORT ).show();
-                    mProgressDialog.dismiss();
-                }catch (Exception e){
-                    e.printStackTrace();
-                    Log.i(TAG,e.getMessage());
-                    Toast.makeText(getApplicationContext(), "发生错误!"+e.getMessage(), Toast.LENGTH_SHORT).show();
-                    mProgressDialog.dismiss();
-                }
 
-    }
-    private void uploadImage(String url, File file) {
-        try {
-            OkHttpClient mOkHttpClient = new OkHttpClient();
-            MultipartBody.Builder builder = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("img", file.getName(),
-                            RequestBody.create(MediaType.parse("image/png"), file));
-            RequestBody requestBody = builder.build();
-            Request request = new Request.Builder()
-                    .url(url)
-                    .post(requestBody)
-                    .build();
-            Call call = mOkHttpClient.newCall(request);
-            call.enqueue(new Callback() {
-                @Override
-                public void onFailure(Call call, IOException e) {
-                    Log.i(TAG, "上传失败:"+e.getMessage());
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            Toast.makeText(getApplicationContext(), "上传失败,请检查网络连接", Toast.LENGTH_SHORT).show();
-                            mProgressDialog.dismiss();
-                        }
-                    });
-                }
-
-                @Override
-                public void onResponse(Call call, Response response) throws IOException {
-                    Log.i(TAG, "上传成功！");
-                   runOnUiThread(new Runnable() {
-                       @Override
-                       public void run() {
-                           Toast.makeText(getApplicationContext(), "上传成功", Toast.LENGTH_SHORT).show();
-                           mProgressDialog.dismiss();
-                           mProgressDialog.setMessage("正在识别，请稍后...");
-                           mProgressDialog.show();
-                           askForResult();
-                       }
-                   });
-
-                }
-            });
-        } catch (Exception e) {
-            e.printStackTrace();
-            Log.i(TAG,e.getMessage());
-            Toast.makeText(getApplicationContext(), "发生错误!"+e.getMessage(), Toast.LENGTH_SHORT).show();
-            mProgressDialog.dismiss();
-        }
-    }
-
-
+    /**
+     * 定位
+     */
     public class MyLocationListener extends BDAbstractLocationListener {
     @Override
     public void onReceiveLocation(BDLocation bdLocation) {
@@ -407,15 +334,16 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onSuccess(File file) {
                 Log.i(TAG,"压缩成功" );
-                uploadImage(ServerAddr,file);
+                    HttpUtil.uploadImg(file);
+                    mProgressDialog.dismiss();
             }
 
             @Override
             public void onError(Throwable e) {
-                File src = new File(imagePath_take);
+                File file = new File(imagePath_take);
                 Log.i(TAG,"压缩失败"+e.getMessage());
-                Toast.makeText(getApplicationContext(),"压缩失败，正在上传原图，请耐心等待···" ,Toast.LENGTH_SHORT ).show();
-                uploadImage(ServerAddr,src);
+                HttpUtil.uploadImg(file);
+                mProgressDialog.dismiss();
             }
         }).launch();
     }
