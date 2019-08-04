@@ -38,6 +38,26 @@ public class LoginActivity extends AppCompatActivity {
     private CheckBox mCheckBox;
     private Map mMap;
     private final String TAG="LoginActivity";
+
+    @Override
+    protected void onDestroy() {
+        id = et_id_login.getText().toString();
+        pwd = et_pwd_login.getText().toString();
+
+        mEditor = mPreferences.edit();
+
+        if (mCheckBox.isChecked()){
+            //复选框被选中
+            mEditor.putBoolean("remeber_pwd", true);
+            mEditor.putString("id",id );
+            mEditor.putString("pwd",pwd );
+        }else {
+            mEditor.clear();
+        }
+        mEditor.apply();
+        super.onDestroy();
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -50,7 +70,7 @@ public class LoginActivity extends AppCompatActivity {
         mMap = new HashMap();
 
         mPreferences = PreferenceManager.getDefaultSharedPreferences(getApplicationContext());
-        boolean isRemeber = mPreferences.getBoolean("remeber_pwd",false);
+        boolean isRemeber = mPreferences.getBoolean("remeber_pwd",false);//boolean值为若找不到，返回的值
         mProgressDialog = new ProgressDialog(LoginActivity.this);
         mProgressDialog.setCancelable(false);
         mProgressDialog.setMessage("正在登录···");
@@ -62,6 +82,7 @@ public class LoginActivity extends AppCompatActivity {
             et_pwd_login.setText(pwd);
             mCheckBox.setChecked(true);
         }
+
 
         login.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -79,7 +100,6 @@ public class LoginActivity extends AppCompatActivity {
                     mMap.put("id",id);
                     mMap.put("pwd",pwd);
                     HttpUtil.sendOKHttpRequestPost(MainActivity.ServerAddr,mMap ,new okhttp3.Callback(){
-
                         @Override
                         public void onFailure(Call call, final IOException e) {
                             new Thread(new Runnable() {
@@ -97,7 +117,6 @@ public class LoginActivity extends AppCompatActivity {
                             startActivity(intent);
                             finish();
 
-
                             mProgressDialog.dismiss();
                         }
 
@@ -113,12 +132,12 @@ public class LoginActivity extends AppCompatActivity {
                                 if (mCheckBox.isChecked()){
                                     //复选框被选中
                                     mEditor.putBoolean("remeber_pwd", true);
-                                    mEditor.putString("id",id );
-                                    mEditor.putString("pwd",pwd );
+                                    mEditor.putString("id",id);
+                                    mEditor.putString("pwd",pwd);
                                 }else {
                                     mEditor.clear();
                                 }
-                                mEditor.apply();
+                                mEditor.commit();
                                 Intent intent = new Intent(getApplicationContext(),MainActivity.class);
                                 startActivity(intent);
                                 finish();

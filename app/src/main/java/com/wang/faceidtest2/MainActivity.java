@@ -93,15 +93,19 @@ public class MainActivity extends AppCompatActivity {
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {//处理按钮事件；
                 switch (menuItem.getItemId()){
                     case R.id.person_details:
-                        Toast.makeText(getApplicationContext(),"个人资料！" ,Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(),"个人资料！" ,Toast.LENGTH_SHORT).show();
+                        //Intent intent1 = new Intent(getApplicationContext(),LoginInfoActivity.class);
+                        //startActivity(intent1);
                         break;
                     case R.id.nav_log://最近记录
-                        Toast.makeText(getApplicationContext(),"最近记录！" ,Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(getApplicationContext(),"最近记录！" ,Toast.LENGTH_SHORT).show();
+                        Intent intent2 = new Intent(getApplicationContext(),LoginInfoActivity.class);
+                        startActivity(intent2);
                         break;
                     case R.id.logout://退出
-                        Intent intent = new Intent(getApplicationContext(),LoginActivity.class);
-                        startActivity(intent);
-                        Toast.makeText(getApplicationContext(),"退出！" ,Toast.LENGTH_SHORT ).show();
+                        Intent intent3 = new Intent(getApplicationContext(),LoginActivity.class);
+                        startActivity(intent3);
+                        //Toast.makeText(getApplicationContext(),"退出！" ,Toast.LENGTH_SHORT ).show();
                         finish();
                         break;
                 }

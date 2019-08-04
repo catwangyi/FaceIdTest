@@ -1,5 +1,7 @@
 package com.wang.faceidtest2.Services;
 
+import java.util.List;
+
 /**
  * @version $Rev$
  * @auther wangyi
@@ -12,6 +14,15 @@ public class User {
     private String pwd;//密码
     private String email;//邮箱
     private String name;//用户姓名
+    private List<InfoItem> mLoginInfos;
+
+    public List<InfoItem> getLoginInfos() {
+        return mLoginInfos;
+    }
+
+    public void setLoginInfos(List<InfoItem> loginInfos) {
+        mLoginInfos = loginInfos;
+    }
 
     public String getId() {
         return id;
