@@ -97,9 +97,11 @@ public class LoginActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(),"请输入正确的账号和密码！" ,Toast.LENGTH_SHORT).show();
                 }else{//输入合法
                     //开始上传账号密码
+
                     mMap.put("id",id);
                     mMap.put("pwd",pwd);
-                    HttpUtil.sendOKHttpRequestPost(MainActivity.ServerAddr,mMap ,new okhttp3.Callback(){
+
+                    HttpUtil.sendOKHttpRequestPost("http://192.168.137.1:8888//store_war_exploded/my",mMap ,new okhttp3.Callback(){
                         @Override
                         public void onFailure(Call call, final IOException e) {
                             new Thread(new Runnable() {
@@ -112,20 +114,17 @@ public class LoginActivity extends AppCompatActivity {
                             }).start();
                             Log.i(TAG, "连接失败！"+e.getMessage());
 
-
-                            Intent intent = new Intent(getApplicationContext(),MainActivity.class);
-                            startActivity(intent);
-                            finish();
-
                             mProgressDialog.dismiss();
                         }
 
                         @Override
                         public void onResponse(Call call, Response response) throws IOException {
+                            Log.i(TAG, "----------------------"+response.header("statu"));
+                            String statu = response.header("statu");
                             //得到返回的登录结果
-                            if("用户名不存在".isEmpty()){
+                            if("用户名不存在".equals(statu)){
                                 Toast.makeText(getApplicationContext(),"用户名不存在！" ,Toast.LENGTH_SHORT).show();
-                            }else if("密码错误".isEmpty()){
+                            }else if("密码错误".equals(statu)){
                                 Toast.makeText(getApplicationContext(),"密码错误！" ,Toast.LENGTH_SHORT).show();
                             }else{
                                 mEditor = mPreferences.edit();
@@ -138,6 +137,7 @@ public class LoginActivity extends AppCompatActivity {
                                     mEditor.clear();
                                 }
                                 mEditor.commit();
+//                                Log.i(TAG,"账号："+mMap.get("id")+"\n"+"密码："+mMap.get("pwd"));
                                 Intent intent = new Intent(getApplicationContext(),MainActivity.class);
                                 startActivity(intent);
                                 finish();
@@ -154,7 +154,7 @@ public class LoginActivity extends AppCompatActivity {
         exit.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                finish();
+                finish();//退出
             }
         });
     }

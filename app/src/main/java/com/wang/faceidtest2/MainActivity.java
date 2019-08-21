@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int LOGIN_ERROR = 3;
     private static final String TAG = "MainActivity";
     private Uri imageUri;
-    public static final String ServerAddr = "https://192.168.0.102:8888";
+
     private ProgressDialog mProgressDialog;
     private String imagePath_take;
     public LocationClient mLocationClient;

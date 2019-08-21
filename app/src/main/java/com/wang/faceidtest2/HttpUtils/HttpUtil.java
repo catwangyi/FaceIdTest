@@ -33,7 +33,6 @@ public class HttpUtil {
                 .post(requestBody)
                 .build();
         client.newCall(request).enqueue(callback);
-
     }
 
     public static void sendOKHttpRequestGet(String address,okhttp3.Callback callback){
