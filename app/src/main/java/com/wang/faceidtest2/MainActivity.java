@@ -25,6 +25,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ZoomControls;
 
@@ -40,12 +41,16 @@ import com.baidu.mapapi.map.MapView;
 import com.baidu.mapapi.map.MyLocationData;
 import com.baidu.mapapi.model.LatLng;
 import com.wang.faceidtest2.HttpUtils.HttpUtil;
+import com.wang.faceidtest2.Services.RunOnUI;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 import top.zibin.luban.Luban;
 import top.zibin.luban.OnCompressListener;
 import top.zibin.luban.OnRenameListener;
@@ -65,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
     private FloatingActionButton mFloatingActionButton;
     private boolean isFirstLocate = true;//用来显示是否是第一次定位
     private DrawerLayout mDrawerLayout;
+    private String username;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,18 +83,25 @@ public class MainActivity extends AppCompatActivity {
         mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_LOCKED_CLOSED);//禁止手动滑动弹出
         //mDrawerLayout.setDrawerLockMode(DrawerLayout.LOCK_MODE_UNLOCKED);//打开手动滑动弹出
         ActionBar actionBar = getSupportActionBar();
-
+        final Intent intent=getIntent();
+        username = (String)intent.getSerializableExtra("Name");
         final NavigationView navigationView = findViewById(R.id.nav_view);//NavigationView
 
+        //设置Header内容
+        View headerView= navigationView.getHeaderView(0);
+        TextView username_tv = headerView.findViewById(R.id.username);
+        username_tv.setText(username);
+        TextView userphone_tv = headerView.findViewById(R.id.phone);
+        userphone_tv.setText((String)intent.getSerializableExtra("Phone"));
+        Log.i(TAG+"名字", username);
         if (actionBar!=null){
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setHomeAsUpIndicator(R.drawable.ic_menu);//菜单按钮
         }
 
-
-
         //navigationView.setCheckedItem(R.id.nav_log);//设置默认选项
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener(){
+
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {//处理按钮事件；
                 switch (menuItem.getItemId()){
@@ -99,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.nav_log://最近记录
                         //Toast.makeText(getApplicationContext(),"最近记录！" ,Toast.LENGTH_SHORT).show();
-                        Intent intent2 = new Intent(getApplicationContext(),LoginInfoActivity.class);
+                        Intent intent2 = new Intent(getApplicationContext(), CheckInfoActivity.class);
                         startActivity(intent2);
                         break;
                     case R.id.logout://退出
@@ -157,7 +170,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 //Toast.makeText(getApplicationContext(),"点击!" ,Toast.LENGTH_SHORT).show();
-                String imagename="face.jpg";
+                String imagename = username+".jpg";
                 File outputImage=new File(getExternalCacheDir(),imagename);//创建File对象，用于存储拍照后的照片
                 imagePath_take=getExternalCacheDir()+"/"+imagename;
                 try{
@@ -290,6 +303,7 @@ public class MainActivity extends AppCompatActivity {
                         mProgressDialog.show();
                         File file = new File(imagePath_take);
                         resize(file);//压缩图片
+
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -326,7 +340,7 @@ public class MainActivity extends AppCompatActivity {
         Luban.with(getApplicationContext()).load(src).ignoreBy(1000).setTargetDir(src.getParent()).setRenameListener(new OnRenameListener() {
             @Override
             public String rename(String filePath) {
-                return "face_re.jpg";
+                return username+".jpg";
             }
         }).setCompressListener(new OnCompressListener() {
             @Override
@@ -336,18 +350,42 @@ public class MainActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onSuccess(File file) {
+            public void onSuccess(final File file) {
                 Log.i(TAG,"压缩成功" );
-                    HttpUtil.uploadImg(file);
-                    mProgressDialog.dismiss();
+                    HttpUtil.uploadImg(file,getResources().getString(R.string.upload_addr), new Callback() {
+                        @Override
+                        public void onFailure(Call call, IOException e) {
+                            RunOnUI.Run(getApplicationContext(),"上传失败"+e.getMessage());
+                            Log.i(TAG,"上传失败"+e.getMessage());
+                            mProgressDialog.dismiss();
+                        }
+
+                        @Override
+                        public void onResponse(Call call, Response response) throws IOException {
+                            Log.i(TAG,"上传成功");
+                            mProgressDialog.dismiss();
+                        }
+                    });
             }
 
             @Override
             public void onError(Throwable e) {
-                File file = new File(imagePath_take);
+                final File file = new File(imagePath_take);
                 Log.i(TAG,"压缩失败"+e.getMessage());
-                HttpUtil.uploadImg(file);
-                mProgressDialog.dismiss();
+                HttpUtil.uploadImg(file, getResources().getString(R.string.upload_addr), new Callback() {
+                    @Override
+                    public void onFailure(Call call, IOException e) {
+                        RunOnUI.Run(getApplicationContext(),"上传失败"+e.getMessage());
+                        Log.i(TAG,"上传失败"+e.getMessage());
+                        mProgressDialog.dismiss();
+                    }
+
+                    @Override
+                    public void onResponse(Call call, Response response) throws IOException {
+                        Log.i(TAG,"上传成功");
+                        mProgressDialog.dismiss();
+                    }
+                });
             }
         }).launch();
     }

@@ -7,9 +7,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
 import java.util.Map;
 
 import okhttp3.FormBody;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
@@ -123,9 +126,25 @@ public class HttpUtil {
         }).start();
     }
 
-    public static boolean uploadImg(File file){
-       boolean isSuccess=false;
+    public static void uploadImg(File file, String url, okhttp3.Callback callback){
+       OkHttpClient okHttpClient = new OkHttpClient();
+        String filename;
+        try {
+            filename = URLEncoder.encode(file.getName(),"UTF-8");
+            MultipartBody.Builder builder = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("imgname", filename)
+                .addFormDataPart("img",filename,
+                        RequestBody.create(MediaType.parse("image/jpeg"),file ));
+        RequestBody requestBody = builder.build();
 
-       return isSuccess;
+        Request request = new Request.Builder()
+                .url(url)
+                .post(requestBody)
+                .build();
+        okHttpClient.newCall(request).enqueue(callback);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

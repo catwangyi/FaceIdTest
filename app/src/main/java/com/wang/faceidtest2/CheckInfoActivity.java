@@ -12,13 +12,13 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.wang.faceidtest2.Services.InfoItem;
-import com.wang.faceidtest2.Services.LoginStatus;
+import com.wang.faceidtest2.Services.Status;
 import com.wang.faceidtest2.Services.User;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class LoginInfoActivity extends AppCompatActivity {
+public class CheckInfoActivity extends AppCompatActivity {
     private List<InfoItem> mInfoItems;
     private ListView lv;
     private User mUser=new User();
@@ -34,17 +34,17 @@ public class LoginInfoActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login_info);
+        setContentView(R.layout.activity_check_info);
         lv=findViewById(R.id.lv);
 
 
         mInfoItems = new ArrayList<InfoItem>();
         InfoItem item1 = new InfoItem();
-        item1.setStatus(LoginStatus.LATE);
-        item1.setTime("yes");
+        item1.setStatus(Status.LoginStatus.LATE);
+        item1.setTime("10:10");
         InfoItem item2 = new InfoItem();
-        item2.setStatus(LoginStatus.ONTIME);
-        item2.setTime("ok");
+        item2.setStatus(Status.LoginStatus.ONTIME);
+        item2.setTime("9:20");
         mInfoItems.add(item1);
         mInfoItems.add(item2);
         mUser.setLoginInfos(mInfoItems);
@@ -80,7 +80,7 @@ public class LoginInfoActivity extends AppCompatActivity {
         public View getView(int position, View convertView, ViewGroup parent) {
             View view;
             if (convertView==null){
-                view = View.inflate(LoginInfoActivity.this,R.layout.infoitem,null);
+                view = View.inflate(CheckInfoActivity.this,R.layout.infoitem,null);
             }else {
                 view = convertView;
             }
